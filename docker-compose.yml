@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mysqldb:
+    image: mysql
+    restart: always
+    # env_file: ./.env
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DB}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASS}
+    ports:
+      - "${MYSQL_PORT}:${MYSQL_PORT}"
+    volumes:
+      - db-config:/etc/mysql
+      - db-data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: always
+    ports:
+      - "${PHPMYADMIN_PORT}:80"
+    environment:
+      PMA_HOST: mysqldb
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASS}
+  
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    image: node-mysql-app
+    volumes:
+      - ./server:/server
+      - /server/node_modules   # Ajout du répertoire node_modules en volume
+    ports:
+      - "${SERVER_PORT}:3000"
+    depends_on:
+      - mysqldb
+    stdin_open: true
+    tty: true
+
+volumes: 
+  db-config:
+  db-data:
